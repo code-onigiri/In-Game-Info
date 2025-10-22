@@ -9,7 +9,7 @@ public class ClientConfig {
     public final ForgeConfigSpec.BooleanValue hudEnabled;
     public final ForgeConfigSpec.ConfigValue<String> hudText;
     public final ForgeConfigSpec.IntValue hudColor;
-    public final ForgeConfigSpec.ConfigValue<String> hudPosition;
+    public final ForgeConfigSpec.EnumValue<HudPosition> hudPosition;
     public final ForgeConfigSpec.IntValue hudOffsetX;
     public final ForgeConfigSpec.IntValue hudOffsetY;
 
@@ -31,8 +31,12 @@ public class ClientConfig {
         hudColor = builder.comment("HUDテキストの色 (16進数RGB)")
                 .defineInRange("hudColor", 0xFFFFFF, 0x000000, 0xFFFFFF);
 
-        hudPosition = builder.comment("HUDの位置: top_left, top_right, bottom_left, bottom_right")
-                .define("hudPosition", "top_right");
+        hudPosition = builder.comment("""
+                HUDの位置を指定:
+                TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT,
+                CENTER_LEFT, CENTER_RIGHT, CENTER_TOP, CENTER_BOTTOM
+                """)
+                .defineEnum("hudPosition", HudPosition.TOP_RIGHT);
 
         hudOffsetX = builder.comment("HUDのX方向余白（ピクセル）")
                 .defineInRange("hudOffsetX", 10, 0, 1000);
