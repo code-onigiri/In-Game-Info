@@ -4,6 +4,7 @@ import com.codeoinigiri.ingameinfo.client.hud.HudOverlay;
 import com.codeoinigiri.ingameinfo.config.ClientConfig;
 import com.codeoinigiri.ingameinfo.hud.ConfigWatcher;
 import com.codeoinigiri.ingameinfo.hud.HudContextManager;
+import com.codeoinigiri.ingameinfo.hud.variable.CacheConfig;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
@@ -18,7 +19,10 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.slf4j.Logger;
+
+import java.io.File;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(InGameInfo.MODID)
@@ -33,6 +37,9 @@ public class InGameInfo
     {
         HudContextManager.loadContexts();
         ConfigWatcher.startWatching();
+        File configDir = FMLPaths.CONFIGDIR.get().toFile();
+        CacheConfig.load(configDir);
+        CacheConfig.startWatcher();
 
         context.registerConfig(ModConfig.Type.COMMON, ClientConfig.CLIENT_SPEC);
 
@@ -42,11 +49,6 @@ public class InGameInfo
         MinecraftForge.EVENT_BUS.register(HudOverlay.class);
     }
 
-//    private void commonSetup(final FMLCommonSetupEvent event)
-//    {
-//        // Some common setup code
-//        LOGGER.info("HELLO FROM COMMON SETUP");
-//    }
 //
 //    // You can use SubscribeEvent and let the Event Bus discover methods to call
 //    @SubscribeEvent
