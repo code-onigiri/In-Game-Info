@@ -1,9 +1,13 @@
-package com.codeoinigiri.ingameinfo.hud.variable;
+package com.codeoinigiri.ingameinfo.variable;
 
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 文字列内の ${...} 形式の式を評価して置換します。
+ * (旧 ExpressionUtils から移動)
+ */
 public class ExpressionUtils {
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\$\\{([^{}]+)}");
 

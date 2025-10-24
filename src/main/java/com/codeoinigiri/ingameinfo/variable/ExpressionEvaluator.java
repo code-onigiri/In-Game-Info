@@ -1,4 +1,4 @@
-package com.codeoinigiri.ingameinfo.hud.variable;
+package com.codeoinigiri.ingameinfo.variable;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -8,13 +8,7 @@ import java.util.function.Function;
 
 /**
  * ScriptEngineに依存せず、簡単な数式と条件式を評価する。
- * 対応:
- *  - 四則演算 (+, -, *, /)
- *  - 比較 (<, >, <=, >=, ==, !=)
- *  - 三項演算子 (cond ? true : false)
- *  - 括弧 (...)
- *  - 文字列 ("text")
- *  - Math系関数 (abs, round, floor, ceil, sqrt, sin, cos, tan)
+ * (旧 ExpressionEvaluator から移動)
  */
 public class ExpressionEvaluator {
 
@@ -22,7 +16,6 @@ public class ExpressionEvaluator {
     private static final Map<String, BiFunction<Double, Double, Double>> mathFunctions2 = new HashMap<>();
 
     static {
-        // 一引数関数
         mathFunctions.put("abs", Math::abs);
         mathFunctions.put("round", d -> (double) Math.round(d));
         mathFunctions.put("floor", Math::floor);
@@ -32,7 +25,6 @@ public class ExpressionEvaluator {
         mathFunctions.put("cos", Math::cos);
         mathFunctions.put("tan", Math::tan);
 
-        // 二引数関数
         mathFunctions2.put("min", Math::min);
         mathFunctions2.put("max", Math::max);
         mathFunctions2.put("pow", Math::pow);
@@ -51,6 +43,17 @@ public class ExpressionEvaluator {
         }
     }
 
+    public static String getHelp() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- InGameInfo Operators & Functions ---\n");
+        sb.append("Operators: +, -, *, /, <, >, <=, >=, ==, !=, ? :\n");
+        sb.append("Ternary: (condition ? value_if_true : value_if_false)\n");
+        sb.append("Functions (1 arg): ").append(String.join(", ", mathFunctions.keySet())).append("\n");
+        sb.append("Functions (2 arg): ").append(String.join(", ", mathFunctions2.keySet())).append("\n");
+        sb.append("Special Functions: format(value, \"pattern\")");
+        return sb.toString();
+    }
+
     private static String substituteVariables(String expr, Map<String, String> vars) {
         for (var e : vars.entrySet()) {
             String value = e.getValue();
@@ -63,9 +66,6 @@ public class ExpressionEvaluator {
         return expr;
     }
 
-    // ─────────────────────────────
-    // 再帰下降パーサ
-    // ─────────────────────────────
     private static class Parser {
         private final String str;
         private int pos = -1, ch;

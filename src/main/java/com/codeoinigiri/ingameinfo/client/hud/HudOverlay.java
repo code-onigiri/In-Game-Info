@@ -1,22 +1,24 @@
 package com.codeoinigiri.ingameinfo.client.hud;
 
-import com.codeoinigiri.ingameinfo.config.ClientConfig;
-import com.codeoinigiri.ingameinfo.config.HudPosition;
 import com.codeoinigiri.ingameinfo.hud.HudContext;
 import com.codeoinigiri.ingameinfo.hud.HudContextManager;
-import com.codeoinigiri.ingameinfo.hud.variable.VariableResolver;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.codeoinigiri.ingameinfo.variable.ExpressionUtils;
+import com.codeoinigiri.ingameinfo.variable.VariableManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.FastColor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.List;
+import java.util.Map;
+
 @Mod.EventBusSubscriber(value = Dist.CLIENT,modid = "ingameinfo")
 public class HudOverlay {
-    private static final VariableResolver resolver = new VariableResolver();
+    
 
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Post event) {
@@ -30,16 +32,20 @@ public class HudOverlay {
         int screenHeight = mc.getWindow().getGuiScaledHeight();
 
         for (HudContext ctx : HudContextManager.getContexts()) {
-            var resolvedLines = resolver.resolveLines(ctx.lines);
+            // ✅ シングルトンから取得
+            Map<String, String> vars = VariableManager.getInstance().getResolvedVariables();
+            List<String> resolvedLines = ctx.lines().stream()
+                    .map(line -> ExpressionUtils.evaluateEmbedded(line, vars))
+                    .toList();
 
-            float scale = ctx.scale;
+            float scale = ctx.scale();
             int lineHeight = (int) ((font.lineHeight + 2) * scale);
             int totalHeight = resolvedLines.size() * lineHeight;
             int maxWidth = resolvedLines.stream().mapToInt(font::width).max().orElse(0);
 
             // --- 位置計算（スケールは反映せず、後でまとめて行う） ---
             int x = 0, y = 0;
-            switch (ctx.position) {
+            switch (ctx.position()) {
                 case TOP_LEFT -> { x = 10; y = 10; }
                 case TOP_RIGHT -> { x = (int) (screenWidth - (maxWidth * scale) - 10); y = 10; }
                 case BOTTOM_LEFT -> { x = 10; y = (int) (screenHeight - (totalHeight) - 10); }
@@ -50,15 +56,21 @@ public class HudOverlay {
                 case CENTER_BOTTOM -> { x = (int) ((screenWidth / 2f) - (maxWidth * scale / 2f)); y = (int) (screenHeight - totalHeight - 10); }
             }
 
-            RenderSystem.enableBlend();
-
-            if (ctx.background) {
-                int padding = (int) (ctx.backgroundPadding * scale);
+            if (ctx.background()) {
+                int padding = (int) (ctx.backgroundPadding() * scale);
                 int bgX1 = x - padding;
                 int bgY1 = y - padding;
                 int bgX2 = x + (int) (maxWidth * scale) + padding;
                 int bgY2 = y + totalHeight + padding;
-                gui.fill(bgX1, bgY1, bgX2, bgY2, ctx.backgroundColor);
+
+                double clampedAlpha = Math.max(0.0, Math.min(1.0, ctx.backgroundAlpha()));
+                int alphaByte = (int)(clampedAlpha * 255.0);
+                int redByte = (ctx.backgroundRgb() >> 16) & 0xFF;
+                int greenByte = (ctx.backgroundRgb() >> 8) & 0xFF;
+                int blueByte = ctx.backgroundRgb() & 0xFF;
+                int finalColor = FastColor.ARGB32.color(alphaByte, redByte, greenByte, blueByte);
+
+                gui.fill(bgX1, bgY1, bgX2, bgY2, finalColor);
             }
 
             gui.pose().pushPose();
@@ -66,11 +78,10 @@ public class HudOverlay {
 
             for (int i = 0; i < resolvedLines.size(); i++) {
                 String line = resolvedLines.get(i);
-                gui.drawString(font, line, (int) (x / scale), (int) ((y + i * lineHeight) / scale), ctx.color, ctx.shadow);
+                gui.drawString(font, line, (int) (x / scale), (int) ((y + i * lineHeight) / scale), ctx.color(), ctx.shadow());
             }
 
             gui.pose().popPose();
-            RenderSystem.disableBlend();
         }
     }
 }

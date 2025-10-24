@@ -1,73 +1,45 @@
 package com.codeoinigiri.ingameinfo;
 
-import com.codeoinigiri.ingameinfo.client.hud.HudOverlay;
 import com.codeoinigiri.ingameinfo.config.ClientConfig;
 import com.codeoinigiri.ingameinfo.hud.ConfigWatcher;
 import com.codeoinigiri.ingameinfo.hud.HudContextManager;
-import com.codeoinigiri.ingameinfo.hud.variable.CacheConfig;
+import com.codeoinigiri.ingameinfo.variable.VariableManager;
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 
-import java.io.File;
+@Mod("ingameinfo")
+public class InGameInfo {
+    public static final String MOD_ID = "ingameinfo";
+    public static final Logger LOGGER = LogUtils.getLogger();
 
-// The value here should match an entry in the META-INF/mods.toml file
-@Mod(InGameInfo.MODID)
-public class InGameInfo
-{
-    // Define mod id in a common place for everything to reference
-    public static final String MODID = "ingameinfo";
-    // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public InGameInfo(FMLJavaModLoadingContext context) {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
-    public InGameInfo(FMLJavaModLoadingContext context)
-    {
-        HudContextManager.loadContexts();
-        ConfigWatcher.startWatching();
-        File configDir = FMLPaths.CONFIGDIR.get().toFile();
-        CacheConfig.load(configDir);
-        CacheConfig.startWatcher();
+        // Register the setup method for modloading
+        modEventBus.addListener(this::commonSetup);
 
-        context.registerConfig(ModConfig.Type.COMMON, ClientConfig.CLIENT_SPEC);
+        // Register the config
+        context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.CLIENT_SPEC);
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
-
-        MinecraftForge.EVENT_BUS.register(HudOverlay.class);
     }
 
-//
-//    // You can use SubscribeEvent and let the Event Bus discover methods to call
-//    @SubscribeEvent
-//    public void onServerStarting(ServerStartingEvent event)
-//    {
-//        // Do something when the server starts
-//        LOGGER.info("HELLO from server starting");
-//    }
-//
-//    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-//    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-//    public static class ClientModEvents
-//    {
-//        @SubscribeEvent
-//        public static void onClientSetup(FMLClientSetupEvent event)
-//        {
-//            // Some client setup code
-//            LOGGER.info("HELLO FROM CLIENT SETUP");
-//            LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
-//        }
-//    }
+    private void commonSetup(final FMLCommonSetupEvent event) {
+        LOGGER.info("InGameInfo: Common Setup");
+
+        // Initialize VariableManager which sets up all variable providers
+        VariableManager.getInstance().initialize();
+
+        // Load HUD contexts and start watching for config changes
+        HudContextManager.loadContexts();
+        ConfigWatcher.startWatching();
+    }
 }

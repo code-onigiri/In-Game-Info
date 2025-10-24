@@ -89,48 +89,63 @@ format(value, digits)
 ### 🟠 config/ingameinfo/context フォルダ
 - 各HUDブロック（テキスト）を `.toml` ファイルで定義。
 - 複数のHUDを同時に読み込み可能。
+#### 📍 パッケージ構造
+```
+com.codeoinigiri.ingameinfo.api/
+├── VariableAPI.java              # 🌐 公開API（外部用）
+├── VariableRegistryImpl.java      # 🔧 実装クラス（内部用）
+└── VariableAPIExamples.java      # 📚 使用例集
+```
 
+#### 🔧 主要メソッド（VariableAPI）:
 #### 例: `config/ingameinfo/context/test1.toml`
 ```
-name = "test1"
+VariableAPI.register("custom.myvar", "static_value");
 position = "top-left"
 color = 0xFFFFFF
-scale = 1.0
+VariableAPI.register("custom.timestamp", 
 shadow = true
 
 text = """
-座標: ${player.posX}, ${player.posY}, ${player.posZ}
+VariableAPI.update("custom.myvar", "new_value");
 体力: ${player.health} / ${player.max_health}
 天候: ${world.weather}
-時間: ${world.time_str}
+VariableAPI.unregister("custom.myvar");
 """
 ```
-
+Map<String, String> all = VariableAPI.getAll();
 ---
 
-## 🔄 更新設計（キャッシュ・自動リロード）
+boolean exists = VariableAPI.contains("custom.myvar");
+
+// サイズ取得
+int count = VariableAPI.size();
 
 | 対象カテゴリ | デフォルトTTL | 用途 | 備考 |
-|---------------|----------------|------|------|
+VariableAPI.clear();
+
+// デバッグ出力
+VariableAPI.debugPrintAll();
+VariableAPI.debugGet("custom.myvar");
 | `player` | 200ms | 体力・座標・装備 | 変化頻度が高い |
 | `world` | 1000ms | 天候・時間・バイオーム | 変化頻度中程度 |
-| `environment` | 500ms | 明るさ・温度・高度 | |
+#### 📖 基本的な使用例:
 | `system` | 1000ms | FPS・言語 | 比較的静的 |
 
 ### 🔁 自動リロード
 - `WatchService` により、  
-  `cache_ttl.toml` / `context/*.toml` が変更されると即時リロード。
+    VariableAPI.register("custom.key_pressed", "true");
 - Mod再起動不要。
 
 ---
-
+VariableAPI.register("integration.mana", () -> getManaLevel());
 ## ⚠️ 注意点（AI生成時）
 
-### 🚫 禁止事項
+VariableAPI.register("event.boss_health", 
 - Minecraft内部クラスの**MixinやASM改変**は行わない。
 - `@SubscribeEvent` は `FMLClientSetupEvent` などに正しく登録。
 - `Minecraft.getInstance()` 呼び出しは**クライアント側のみ**。
-- ファイル操作は `config/ingameinfo/` 配下のみ許可。
+VariableAPI.register("system.memory",
 
 ### ✅ コード生成ルール
 - クラス単位で出力すること（部分差し替え禁止）

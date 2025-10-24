@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.codeoinigiri.ingameinfo.InGameInfo.LOGGER;
+
 public class HudContextManager {
     private static final List<HudContext> contexts = Collections.synchronizedList(new ArrayList<>());
     private static final File CONTEXT_DIR = new File("config/ingameinfo/context");
@@ -52,10 +54,36 @@ public class HudContextManager {
                             boolean shadow = config.getOrElse("shadow", true);
 
                             boolean background = config.getOrElse("background", false);
-                            int backgroundColor = config.getOrElse("background_color", 0x55000000);
                             int backgroundPadding = config.getOrElse("background_padding", 4);
 
-                            contexts.add(new HudContext(name, position, color, lines, align, scale, shadow, background, backgroundColor, backgroundPadding));
+                            int backgroundRgb;
+                            double backgroundAlpha;
+
+                            // New separate RGB and Alpha
+                            Object rgbValue = config.get("background_rgb");
+                            Object alphaValue = config.get("background_alpha");
+                            LOGGER.info("[Debug] background_rgb raw value: {} (Type: {})", rgbValue, rgbValue != null ? rgbValue.getClass().getName() : "null");
+                            LOGGER.info("[Debug] background_alpha raw value: {} (Type: {})", alphaValue, alphaValue != null ? alphaValue.getClass().getName() : "null");
+
+                            // Robustly get RGB value
+                            Object rgbObj = config.get("background_rgb");
+                            if (rgbObj instanceof Number) {
+                                backgroundRgb = ((Number) rgbObj).intValue();
+                            } else {
+                                backgroundRgb = 0x000000; // default
+                            }
+
+                            // Robustly get alpha value
+                            Object alphaObj = config.get("background_alpha");
+                            if (alphaObj instanceof Number) {
+                                backgroundAlpha = ((Number) alphaObj).doubleValue();
+                            } else {
+                                backgroundAlpha = 0.33; // default
+                            }
+
+                            LOGGER.info("[Debug] Using RGB: {}, Alpha: {}", backgroundRgb, backgroundAlpha);
+
+                            contexts.add(new HudContext(name, position, color, lines, align, scale, shadow, background, backgroundRgb, backgroundAlpha, backgroundPadding));
 
                         } catch (Exception e) {
                             e.printStackTrace();
