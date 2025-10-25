@@ -1,5 +1,8 @@
 package com.codeoinigiri.ingameinfo.variable;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 import java.util.function.Supplier;
 
 /**
@@ -7,6 +10,8 @@ import java.util.function.Supplier;
  * It can hold either a static string value or a dynamic supplier.
  */
 public class CustomVariable {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private final String key;
     private final String staticValue;
     private final Supplier<String> supplier;
@@ -23,7 +28,7 @@ public class CustomVariable {
                 String value = supplier.get();
                 return value != null ? value : "";
             } catch (Exception e) {
-                System.out.println("[IngameInfo] Error evaluating supplier for key: " + key);
+                LOGGER.error("Error evaluating supplier for key: {}", key, e);
                 return "ERROR";
             }
         }

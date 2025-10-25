@@ -1,5 +1,8 @@
 package com.codeoinigiri.ingameinfo.api;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -13,6 +16,17 @@ import java.util.function.Supplier;
  *   VariableAPI.register("custom.dynamic", () -> getCurrentValue());
  */
 public class VariableAPI {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final IVariableRegistry REGISTRY = new VariableRegistryFacade();
+
+    /**
+     * 他Mod向けのレジストリインターフェース。
+     * 通常はこのクラスの静的メソッドを使えば十分ですが、
+     * 依存の分離やモック用途にインターフェースが必要な場合に利用できます。
+     */
+    public static IVariableRegistry registry() {
+        return REGISTRY;
+    }
 
     // ===============================
     // 📝 変数登録
@@ -130,13 +144,13 @@ public class VariableAPI {
      * 登録済みの全変数を表示（デバッグ用）
      */
     public static void debugPrintAll() {
-        System.out.println("[IngameInfo] ===== Registered Custom Variables =====");
+        LOGGER.info("===== Registered Custom Variables =====");
         int count = 0;
         for (var entry : getAll().entrySet()) {
-            System.out.println(String.format("[IngameInfo]   %s = %s", entry.getKey(), entry.getValue()));
+            LOGGER.info("  {} = {}", entry.getKey(), entry.getValue());
             count++;
         }
-        System.out.println(String.format("[IngameInfo] Total: %d variables", count));
+        LOGGER.info("Total: {} variables", count);
     }
 
     /**
@@ -145,7 +159,7 @@ public class VariableAPI {
      */
     public static void debugGet(String key) {
         String value = get(key);
-        System.out.println(String.format("[IngameInfo] %s = %s", key, value != null ? value : "NOT FOUND"));
+        LOGGER.info("{} = {}", key, value != null ? value : "NOT FOUND");
     }
 }
 

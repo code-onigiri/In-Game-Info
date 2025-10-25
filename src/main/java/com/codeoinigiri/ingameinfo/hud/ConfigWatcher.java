@@ -1,5 +1,8 @@
 package com.codeoinigiri.ingameinfo.hud;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -11,6 +14,7 @@ import java.nio.file.*;
  * - スレッドセーフな停止処理
  */
 public class ConfigWatcher {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final File CONTEXT_DIR = new File("config/ingameinfo/context");
     private static Thread watcherThread;
     private static volatile boolean running = false;
@@ -28,7 +32,7 @@ public class ConfigWatcher {
         if (!CONTEXT_DIR.exists()) {
             boolean ok = CONTEXT_DIR.mkdirs();
             if (!ok) {
-                System.out.println("[IngameInfo] Warning: Failed to create context directory: " + CONTEXT_DIR.getAbsolutePath());
+                LOGGER.warn("Failed to create context directory: {}", CONTEXT_DIR.getAbsolutePath());
             }
         }
 
@@ -44,7 +48,7 @@ public class ConfigWatcher {
                         StandardWatchEventKinds.ENTRY_MODIFY
                 );
 
-                System.out.println("[IngameInfo] Config watcher started: " + path);
+                LOGGER.info("Config watcher started: {}", path);
 
                 // ===============================
                 // 📡 イベントループ
@@ -60,16 +64,16 @@ public class ConfigWatcher {
                         // .tomlファイルのみ監視
                         if (changed != null && changed.toString().endsWith(".toml")) {
                             shouldReload = true;
-                            System.out.println("[IngameInfo] Detected: " + kind.name() + " -> " + changed);
+                            LOGGER.info("Detected: {} -> {}", kind.name(), changed);
                         }
                     }
 
                     if (shouldReload) {
                         try {
                             HudContextManager.loadContexts();
-                            System.out.println("[IngameInfo] HUD contexts reloaded.");
+                            LOGGER.info("HUD contexts reloaded.");
                         } catch (Exception e) {
-                            System.out.println("[IngameInfo] Error reloading contexts: " + e);
+                            LOGGER.error("Error reloading contexts", e);
                         }
                     }
 
@@ -77,11 +81,11 @@ public class ConfigWatcher {
                 }
 
             } catch (InterruptedException e) {
-                System.out.println("[IngameInfo] Config watcher thread interrupted.");
+                LOGGER.warn("Config watcher thread interrupted.");
             } catch (ClosedWatchServiceException cwse) {
-                System.out.println("[IngameInfo] Config watcher service closed.");
+                LOGGER.info("Config watcher service closed.");
             } catch (IOException e) {
-                System.out.println("[IngameInfo] Config watcher I/O error: " + e);
+                LOGGER.error("Config watcher I/O error", e);
             } finally {
                 running = false;
             }
@@ -101,7 +105,7 @@ public class ConfigWatcher {
             try {
                 watcherThread.join(2000); // 最大2秒待機
             } catch (InterruptedException e) {
-                System.out.println("[IngameInfo] Config watcher stop interrupted.");
+                LOGGER.warn("Config watcher stop interrupted.");
             }
             watcherThread = null;
         }

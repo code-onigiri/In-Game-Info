@@ -1,6 +1,8 @@
 package com.codeoinigiri.ingameinfo.api;
 
 import com.codeoinigiri.ingameinfo.variable.CustomVariable;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,44 +14,45 @@ import java.util.function.Supplier;
  * 外部コードからは VariableAPI を使用してください。
  */
 public class VariableRegistryImpl {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<String, CustomVariable> customVariables = new ConcurrentHashMap<>();
 
     public static void register(String key, String value) {
         if (key == null || key.isEmpty()) {
-            System.out.println("[IngameInfo] Error: Variable key cannot be null or empty");
+            LOGGER.error("Variable key cannot be null or empty");
             return;
         }
         customVariables.put(key, new CustomVariable(key, value, null));
-        System.out.println("[IngameInfo] Registered custom variable: " + key + " = " + value);
+        LOGGER.info("Registered custom variable: {} = {}", key, value);
     }
 
     public static void register(String key, Supplier<String> supplier) {
         if (key == null || key.isEmpty()) {
-            System.out.println("[IngameInfo] Error: Variable key cannot be null or empty");
+            LOGGER.error("Variable key cannot be null or empty");
             return;
         }
         if (supplier == null) {
-            System.out.println("[IngameInfo] Error: Supplier cannot be null");
+            LOGGER.error("Supplier cannot be null");
             return;
         }
         customVariables.put(key, new CustomVariable(key, null, supplier));
-        System.out.println("[IngameInfo] Registered dynamic custom variable: " + key);
+        LOGGER.info("Registered dynamic custom variable: {}", key);
     }
 
     public static void update(String key, String newValue) {
         if (!customVariables.containsKey(key)) {
-            System.out.println("[IngameInfo] Warning: Variable not found: " + key);
+            LOGGER.warn("Variable not found: {}", key);
             return;
         }
         customVariables.put(key, new CustomVariable(key, newValue, null));
-        System.out.println("[IngameInfo] Updated custom variable: " + key + " = " + newValue);
+        LOGGER.info("Updated custom variable: {} = {}", key, newValue);
     }
 
     public static void unregister(String key) {
         if (customVariables.remove(key) != null) {
-            System.out.println("[IngameInfo] Unregistered custom variable: " + key);
+            LOGGER.info("Unregistered custom variable: {}", key);
         } else {
-            System.out.println("[IngameInfo] Warning: Variable not found: " + key);
+            LOGGER.warn("Variable not found: {}", key);
         }
     }
 
@@ -77,7 +80,7 @@ public class VariableRegistryImpl {
 
     public static void clear() {
         customVariables.clear();
-        System.out.println("[IngameInfo] Cleared all custom variables");
+        LOGGER.info("Cleared all custom variables");
     }
 }
 

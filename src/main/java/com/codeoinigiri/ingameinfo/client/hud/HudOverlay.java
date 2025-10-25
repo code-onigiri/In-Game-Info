@@ -4,8 +4,11 @@ import com.codeoinigiri.ingameinfo.hud.HudContext;
 import com.codeoinigiri.ingameinfo.hud.HudContextManager;
 import com.codeoinigiri.ingameinfo.variable.ExpressionUtils;
 import com.codeoinigiri.ingameinfo.variable.VariableManager;
+import com.codeoinigiri.ingameinfo.hud.util.FormattingUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FastColor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
@@ -17,6 +20,7 @@ import java.util.Map;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = "ingameinfo", bus = Mod.EventBusSubscriber.Bus.MOD)
 public class HudOverlay {
+
 
     @SubscribeEvent
     public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
@@ -31,6 +35,16 @@ public class HudOverlay {
                 Map<String, String> vars = VariableManager.getInstance().getResolvedVariables();
                 List<String> resolvedLines = ctx.lines().stream()
                         .map(line -> ExpressionUtils.evaluateEmbedded(line, vars))
+                        .toList();
+
+                // 装飾コードを自動的に正しい順序に並び替え（色→スタイル）
+                List<String> reorderedLines = resolvedLines.stream()
+                        .map(FormattingUtils::reorderFormattingCodes)
+                        .toList();
+
+                // 文字列をComponentに変換（装飾文字をサポート）
+                List<MutableComponent> componentLines = reorderedLines.stream()
+                        .map(Component::literal)
                         .toList();
 
                 float scale = ctx.scale();
@@ -53,8 +67,11 @@ public class HudOverlay {
                 // フォント高さ
                 int fontLineHeightScaled = (int) (font.lineHeight * scale);
 
-                // 各行の幅を個別に計算
-                int maxWidth = resolvedLines.stream().mapToInt(font::width).max().orElse(0);
+                // 各行の幅を個別に計算（Componentの幅を使用）
+                int maxWidth = componentLines.stream()
+                        .mapToInt(font::width)
+                        .max()
+                        .orElse(0);
 
                 // 全体の高さ計算
                 int totalHeight;
@@ -111,8 +128,8 @@ public class HudOverlay {
                         // 行ごとの背景（各行の文字幅に合わせる）
                         int currentY = y;
 
-                        for (int i = 0; i < resolvedLines.size(); i++) {
-                            String line = resolvedLines.get(i);
+                        for (int i = 0; i < componentLines.size(); i++) {
+                            MutableComponent line = componentLines.get(i);
                             int lineWidth = (int) (font.width(line) * scale);
 
                             // アライメントに応じてX座標を調整
@@ -131,7 +148,7 @@ public class HudOverlay {
                             guiGraphics.fill(bgX1, bgY1, bgX2, bgY2, finalColor);
 
                             // 次の行に移動する前に行間パディングを描画
-                            if (i < resolvedLines.size() - 1) {
+                            if (i < componentLines.size() - 1) {
                                 // 下行間パディング
                                 if (lineSpacingPaddingBottomPx > 0) {
                                     int gapBottomY1 = bgY2;
@@ -144,7 +161,7 @@ public class HudOverlay {
                                     int nextLineY = bgY2 + lineSpacingPaddingBottomPx + lineSpacingPx;
 
                                     // 次の行の幅を事前に計算
-                                    String nextLine = resolvedLines.get(i + 1);
+                                    MutableComponent nextLine = componentLines.get(i + 1);
                                     int nextLineWidth = (int) (font.width(nextLine) * scale);
                                     int nextLineX = x;
                                     switch (ctx.align()) {
@@ -176,8 +193,8 @@ public class HudOverlay {
 
                 int currentY = y;
 
-                for (int i = 0; i < resolvedLines.size(); i++) {
-                    String line = resolvedLines.get(i);
+                for (int i = 0; i < componentLines.size(); i++) {
+                    MutableComponent line = componentLines.get(i);
                     int lineWidth = (int) (font.width(line) * scale);
 
                     // アライメント
@@ -201,6 +218,7 @@ public class HudOverlay {
                         textY = y + i * (fontLineHeightScaled + lineSpacingPx);
                     }
 
+                    // Componentを使用して描画（装飾文字をサポート）
                     guiGraphics.drawString(font, line, (int) (textX / scale), (int) (textY / scale), ctx.color(), ctx.shadow());
                 }
 
