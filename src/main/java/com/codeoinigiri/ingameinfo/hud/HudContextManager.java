@@ -26,11 +26,13 @@ public class HudContextManager {
     public static synchronized void loadContexts() {
         contexts.clear();
         if (!CONTEXT_DIR.exists()) {
-            CONTEXT_DIR.mkdirs();
+            if (!CONTEXT_DIR.mkdirs()) {
+                LOGGER.warn("Failed to create HUD context directory: {}", CONTEXT_DIR.getAbsolutePath());
+            }
         }
 
-        try {
-            Files.list(CONTEXT_DIR.toPath())
+        try (var paths = Files.list(CONTEXT_DIR.toPath())) {
+            paths
                 .filter(p -> p.toString().endsWith(".toml"))
                 .forEach(path -> {
                     try (CommentedFileConfig config = CommentedFileConfig.builder(path)
@@ -62,7 +64,43 @@ public class HudContextManager {
 
                         // Background settings
                         boolean background = config.getOrElse("background", false);
-                        int backgroundPadding = config.getOrElse("background_padding", 4);
+
+                        // Padding settings: 一括設定または個別設定（個別が優先）
+                        int defaultPadding = config.getOrElse("padding",
+                                config.getOrElse("background_padding",
+                                config.getOrElse("backgroundPadding", 4)));
+
+                        int paddingTop = config.getOrElse("padding_top",
+                                config.getOrElse("padding_y", defaultPadding));
+                        int paddingBottom = config.getOrElse("padding_bottom",
+                                config.getOrElse("padding_y", defaultPadding));
+                        int paddingLeft = config.getOrElse("padding_left",
+                                config.getOrElse("padding_x", defaultPadding));
+                        int paddingRight = config.getOrElse("padding_right",
+                                config.getOrElse("padding_x", defaultPadding));
+
+                        // Line spacing settings
+                        int lineSpacing = config.getOrElse("line_spacing", 0);
+
+                        // Line spacing padding settings (行間の上下にパディングを適用)
+                        int defaultLineSpacingPadding = config.getOrElse("line_spacing_padding", 0);
+                        int lineSpacingPaddingTop = config.getOrElse("line_spacing_padding_top",
+                                config.getOrElse("line_spacing_padding_y", defaultLineSpacingPadding));
+                        int lineSpacingPaddingBottom = config.getOrElse("line_spacing_padding_bottom",
+                                config.getOrElse("line_spacing_padding_y", defaultLineSpacingPadding));
+
+                        // Margin settings (画面端からの余白)
+                        int defaultMargin = config.getOrElse("margin", 0);
+                        int marginTop = config.getOrElse("margin_top",
+                                config.getOrElse("margin_y", defaultMargin));
+                        int marginBottom = config.getOrElse("margin_bottom",
+                                config.getOrElse("margin_y", defaultMargin));
+                        int marginLeft = config.getOrElse("margin_left",
+                                config.getOrElse("margin_x", defaultMargin));
+                        int marginRight = config.getOrElse("margin_right",
+                                config.getOrElse("margin_x", defaultMargin));
+
+                        boolean backgroundPerLine = config.getOrElse("background_per_line", false);
 
                         // --- Background Color Logic (using Optional) ---
                         Optional<Object> rgbOptional = config.getOptional("background_rgb");
@@ -91,7 +129,14 @@ public class HudContextManager {
                         LOGGER.info("[Debug] Using RGB: {}, Alpha: {}", backgroundRgb, backgroundAlpha);
 
                         // Create and add context
-                        contexts.add(new HudContext(name, position, color, lines, align, scale, shadow, background, backgroundRgb, backgroundAlpha, backgroundPadding));
+                        contexts.add(new HudContext(
+                                name, position, color, lines, align, scale, shadow,
+                                background, backgroundRgb, backgroundAlpha,
+                                backgroundPerLine,
+                                paddingTop, paddingBottom, paddingLeft, paddingRight,
+                                lineSpacing, lineSpacingPaddingTop, lineSpacingPaddingBottom,
+                                marginTop, marginBottom, marginLeft, marginRight
+                        ));
 
                     } catch (Exception e) {
                         LOGGER.error("Failed to load HUD context from: " + path, e);
