@@ -1,0 +1,63 @@
+{
+  "ingameinfo.screen.settings.title": "IngameInfo 設定: %s",
+  "ingameinfo.screen.toggle.on": "ON",
+  "ingameinfo.screen.toggle.off": "OFF",
+
+  "ingameinfo.label.text_color": "テキスト色",
+  "ingameinfo.label.scale": "スケール",
+  "ingameinfo.label.background": "背景",
+  "ingameinfo.label.alpha": "アルファ",
+  "ingameinfo.label.padding_t": "パディング 上",
+  "ingameinfo.label.padding_l": "パディング 左",
+  "ingameinfo.label.line_spacing": "行間",
+  "ingameinfo.label.pad_bottom": "パッド 下",
+
+  "ingameinfo.label.shadow": "影",
+  "ingameinfo.label.align": "整列",
+  "ingameinfo.label.rgb": "RGB",
+  "ingameinfo.label.per_line": "行ごと",
+  "ingameinfo.label.padding_b": "パディング 下",
+  "ingameinfo.label.padding_r": "パディング 右",
+  "ingameinfo.label.pad_top": "パッド 上",
+
+  "ingameinfo.button.apply": "適用",
+  "ingameinfo.button.cancel": "キャンセル",
+  "ingameinfo.button.reset": "リセット",
+
+  "ingameinfo.margin.top": "余白 上",
+  "ingameinfo.margin.bottom": "余白 下",
+  "ingameinfo.margin.left": "余白 左",
+  "ingameinfo.margin.right": "余白 右",
+
+  "ingameinfo.edit.hint.position": "HUD編集: 位置 (右クリック: アンカー切替, ドラッグ: 移動, F9: 切替, F10: 設定, F8: 新規)",
+  "ingameinfo.edit.hint.text": "HUD編集: テキスト (クリック: 行編集, F6: 挿入(下), Del: 削除, F10: 設定, F8: 新規)",
+  "ingameinfo.edit.mode_message": "HUD編集モード: %s",
+  "ingameinfo.edit.not_in_mode": "編集モードではありません (F9)",
+  "ingameinfo.edit.select_first": "先に HUD をクリックして選択してください",
+  "ingameinfo.edit.selection_info": "[%s] %s",
+
+  "ingameinfo.new_context.title": "HUD コンテキストを作成",
+  "ingameinfo.new_context.placeholder": "コンテキスト名",
+  "ingameinfo.new_context.create_button": "作成",
+  "ingameinfo.new_context.cancel_button": "キャンセル",
+  "ingameinfo.new_context.hint_filename": "ファイル/名前を入力してください (サニタイズされます)",
+  "ingameinfo.new_context.name_label": "名前",
+
+  "ingameinfo.line_edit.placeholder": "",
+  "ingameinfo.line_edit.save": "保存",
+  "ingameinfo.line_edit.cancel": "キャンセル",
+  "ingameinfo.line_edit.delete_line": "行を削除",
+  "ingameinfo.line_edit.insert_below": "下に挿入",
+  "ingameinfo.line_edit.hint": "生テキスト編集 / 削除 / 挿入",
+  "ingameinfo.line_edit.title": "行を編集: %s",
+
+  "ingameinfo.command.vars.header": "--- 利用可能な変数 ---\n%s",
+  "ingameinfo.command.help": "%s",
+
+  "key.ingameinfo.edit_toggle": "key.ingameinfo.edit_toggle",
+  "key.ingameinfo.edit_settings": "key.ingameinfo.edit_settings",
+  "key.ingameinfo.new_context": "key.ingameinfo.new_context",
+  "key.ingameinfo.line_insert_below": "key.ingameinfo.line_insert_below",
+  "key.ingameinfo.line_delete": "key.ingameinfo.line_delete",
+  "key.categories.ingameinfo": "IngameInfo"
+}

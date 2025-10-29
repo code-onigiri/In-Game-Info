@@ -5,6 +5,7 @@ import com.codeoinigiri.ingameinfo.hud.HudContextManager;
 import com.codeoinigiri.ingameinfo.variable.ExpressionUtils;
 import com.codeoinigiri.ingameinfo.variable.VariableManager;
 import com.codeoinigiri.ingameinfo.hud.util.FormattingUtils;
+import com.codeoinigiri.ingameinfo.client.edit.HudEditManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
@@ -30,20 +31,31 @@ public class HudOverlay {
             if (mc.player == null) return;
 
             Font font = mc.font;
+            // Begin frame for edit manager (hit test cache)
+            HudEditManager.beginFrame(screenWidth, screenHeight, font);
 
             for (HudContext ctx : HudContextManager.getContexts()) {
                 Map<String, String> vars = VariableManager.getInstance().getResolvedVariables();
-                List<String> resolvedLines = ctx.lines().stream()
-                        .map(line -> ExpressionUtils.evaluateEmbedded(line, vars))
-                        .toList();
 
-                // 装飾コードを自動的に正しい順序に並び替え（色→スタイル）
-                List<String> reorderedLines = resolvedLines.stream()
-                        .map(FormattingUtils::reorderFormattingCodes)
-                        .toList();
+                // Build display lines, skipping variable evaluation for selected line while in TEXT mode
+                java.util.ArrayList<String> displayLines = new java.util.ArrayList<>();
+                boolean textMode = HudEditManager.isTextMode();
+                String selectedCtx = HudEditManager.getSelectedContextName().orElse(null);
+                int selectedLineIdx = HudEditManager.getSelectedLineIndex();
+                for (int i = 0; i < ctx.lines().size(); i++) {
+                    String raw = ctx.lines().get(i);
+                    String s;
+                    if (textMode && ctx.name().equals(selectedCtx) && i == selectedLineIdx) {
+                        s = raw; // show raw
+                    } else {
+                        s = ExpressionUtils.evaluateEmbedded(raw, vars);
+                    }
+                    s = FormattingUtils.reorderFormattingCodes(s);
+                    displayLines.add(s);
+                }
 
                 // 文字列をComponentに変換（装飾文字をサポート）
-                List<MutableComponent> componentLines = reorderedLines.stream()
+                List<MutableComponent> componentLines = displayLines.stream()
                         .map(Component::literal)
                         .toList();
 
@@ -54,9 +66,9 @@ public class HudOverlay {
                 int paddingBottomPx = (int) (ctx.paddingBottom() * scale);
                 int paddingLeftPx = (int) (ctx.paddingLeft() * scale);
                 int paddingRightPx = (int) (ctx.paddingRight() * scale);
-                int lineSpacingPx = (int) (ctx.lineSpacing() * scale);
-                int lineSpacingPaddingTopPx = (int) (ctx.lineSpacingPaddingTop() * scale);
-                int lineSpacingPaddingBottomPx = (int) (ctx.lineSpacingPaddingBottom() * scale);
+                int lineSpacingPx = (int) Math.ceil(ctx.lineSpacing() * scale);
+                int lineSpacingPaddingTopPx = (int) Math.ceil(ctx.lineSpacingPaddingTop() * scale);
+                int lineSpacingPaddingBottomPx = (int) Math.ceil(ctx.lineSpacingPaddingBottom() * scale);
 
                 // スケール適用後のマージン
                 int marginTopPx = (int) (ctx.marginTop() * scale);
@@ -64,14 +76,16 @@ public class HudOverlay {
                 int marginLeftPx = (int) (ctx.marginLeft() * scale);
                 int marginRightPx = (int) (ctx.marginRight() * scale);
 
-                // フォント高さ
-                int fontLineHeightScaled = (int) (font.lineHeight * scale);
+                // フォント高さ（小さいスケールでも重ならないように最低1px、端数は切り上げ）
+                int fontLineHeightScaled = Math.max(1, (int) Math.ceil(font.lineHeight * scale));
 
                 // 各行の幅を個別に計算（Componentの幅を使用）
                 int maxWidth = componentLines.stream()
                         .mapToInt(font::width)
                         .max()
                         .orElse(0);
+
+                int lineCount = componentLines.size();
 
                 // 全体の高さ計算
                 int totalHeight;
@@ -80,22 +94,22 @@ public class HudOverlay {
                     int singleLineHeight = paddingTopPx + fontLineHeightScaled + paddingBottomPx;
                     int singleLineGapHeight = lineSpacingPaddingBottomPx + lineSpacingPx + lineSpacingPaddingTopPx;
 
-                    totalHeight = resolvedLines.size() * singleLineHeight;
-                    if (resolvedLines.size() > 1) {
-                        totalHeight += (resolvedLines.size() - 1) * singleLineGapHeight;
+                    totalHeight = lineCount * singleLineHeight;
+                    if (lineCount > 1) {
+                        totalHeight += (lineCount - 1) * singleLineGapHeight;
                     }
                 } else if (ctx.background()) {
                     // 全体背景
-                    int contentHeight = resolvedLines.size() * fontLineHeightScaled;
-                    if (resolvedLines.size() > 1) {
-                        contentHeight += (resolvedLines.size() - 1) * lineSpacingPx;
+                    int contentHeight = lineCount * fontLineHeightScaled;
+                    if (lineCount > 1) {
+                        contentHeight += (lineCount - 1) * lineSpacingPx;
                     }
                     totalHeight = paddingTopPx + contentHeight + paddingBottomPx;
                 } else {
                     // 背景なし
-                    totalHeight = resolvedLines.size() * fontLineHeightScaled;
-                    if (resolvedLines.size() > 1) {
-                        totalHeight += (resolvedLines.size() - 1) * lineSpacingPx;
+                    totalHeight = lineCount * fontLineHeightScaled;
+                    if (lineCount > 1) {
+                        totalHeight += (lineCount - 1) * lineSpacingPx;
                     }
                 }
 
@@ -114,6 +128,17 @@ public class HudOverlay {
                     case CENTER_TOP -> { x = (int) ((screenWidth / 2f) - (totalWidth / 2f)); y = marginTopPx; }
                     case CENTER_BOTTOM -> { x = (int) ((screenWidth / 2f) - (totalWidth / 2f)); y = screenHeight - totalHeight - marginBottomPx; }
                 }
+
+                // Apply live drag preview translation in position mode for selected context
+                var transOpt = HudEditManager.getPreviewTranslation(ctx.name());
+                if (transOpt.isPresent()) {
+                    int[] t = transOpt.get();
+                    x += t[0];
+                    y += t[1];
+                }
+
+                // Register context rectangle for hit testing
+                HudEditManager.registerContextRect(ctx.name(), x, y, totalWidth, totalHeight);
 
                 // 背景描画
                 if (ctx.background()) {
@@ -218,12 +243,28 @@ public class HudOverlay {
                         textY = y + i * (fontLineHeightScaled + lineSpacingPx);
                     }
 
+                    // ヒット領域登録（テキスト編集用）
+                    int hitX = textX;
+                    int hitY = textY;
+                    int hitW = lineWidth;
+                    int hitH = fontLineHeightScaled;
+                    if (ctx.background() && ctx.backgroundPerLine()) {
+                        hitX = textX - paddingLeftPx;
+                        hitY = textY - paddingTopPx;
+                        hitW = paddingLeftPx + lineWidth + paddingRightPx;
+                        hitH = paddingTopPx + fontLineHeightScaled + paddingBottomPx;
+                    }
+                    HudEditManager.registerLineRect(ctx.name(), i, hitX, hitY, hitW, hitH);
+
                     // Componentを使用して描画（装飾文字をサポート）
                     guiGraphics.drawString(font, line, (int) (textX / scale), (int) (textY / scale), ctx.color(), ctx.shadow());
                 }
 
                 guiGraphics.pose().popPose();
             }
+
+            // 最後に編集モードのヒントや枠を描画
+            HudEditManager.renderOverlayHints(guiGraphics);
         });
     }
 }

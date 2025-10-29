@@ -22,14 +22,14 @@ public class ListVariablesCommand {
                         .map(e -> e.getKey() + " = " + e.getValue())
                         .collect(Collectors.joining("\n"));
 
-                    context.getSource().sendSuccess(() -> Component.literal("--- Available Variables ---\n" + varList), false);
+                    context.getSource().sendSuccess(() -> Component.translatable("ingameinfo.command.vars.header", varList), false);
                     return 1;
                 })
             )
             .then(Commands.literal("help")
                 .executes(context -> {
                     String helpText = ExpressionEvaluator.getHelp();
-                    context.getSource().sendSuccess(() -> Component.literal(helpText), false);
+                    context.getSource().sendSuccess(() -> Component.translatable("ingameinfo.command.help", helpText), false);
                     return 1;
                 })
             );

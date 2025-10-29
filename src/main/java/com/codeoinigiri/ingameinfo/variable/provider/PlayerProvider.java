@@ -1,102 +1,111 @@
 package com.codeoinigiri.ingameinfo.variable.provider;
 
-import com.codeoinigiri.ingameinfo.variable.VariableManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import java.text.DecimalFormat;
-
 /**
  * プレイヤー関連の変数を提供します。
- * Tickイベントで定期的に更新し、関連イベントで即時更新します。
+ * Single Responsibility Principle: プレイヤー情報の収集のみに責任を持つ
+ * Open/Closed Principle: AbstractVariableProviderを拡張して機能を追加
  */
-public class PlayerProvider {
-    private final Minecraft mc = Minecraft.getInstance();
-    private final VariableManager manager = VariableManager.getInstance();
-    private final DecimalFormat df = new DecimalFormat("0.##");
+public class PlayerProvider extends AbstractVariableProvider {
+    private static final long HIGH_FREQ_INTERVAL = 1L;    // 毎tick (高頻度)
+    private static final long MID_FREQ_INTERVAL = 5L;     // 5tick毎 (中頻度)
+    private static final long LOW_FREQ_INTERVAL = 20L;    // 20tick毎 (低頻度)
 
-    @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        LocalPlayer player = mc.player;
-        if (player == null) return;
+    private long midFreqCounter = 0;
+    private long lowFreqCounter = 0;
 
-        // 高頻度更新
-        manager.update("player.posX", df.format(player.getX()));
-        manager.update("player.posY", df.format(player.getY()));
-        manager.update("player.posZ", df.format(player.getZ()));
-        manager.update("player.health", df.format(player.getHealth()));
+    public PlayerProvider() {
+        super(HIGH_FREQ_INTERVAL);
+    }
 
-        // 中頻度更新
-        if (mc.level != null && mc.level.getGameTime() % 5 == 0) {
-            manager.update("player.name", player.getName().getString());
-            manager.update("player.food", String.valueOf(player.getFoodData().getFoodLevel()));
-            manager.update("player.saturation", df.format(player.getFoodData().getSaturationLevel()));
-            manager.update("player.yaw", df.format(player.getYRot()));
-            manager.update("player.pitch", df.format(player.getXRot()));
+    @Override
+    public String getName() {
+        return "PlayerProvider";
+    }
+
+    @Override
+    protected void updateVariables() {
+        if (!isValid()) return;
+        LocalPlayer player = getPlayer();
+        long gameTick = getLevel().getGameTime();
+
+        // 高頻度更新（毎tick）
+        updateHighFrequency(player);
+
+        // 中頻度更新（5tick毎）
+        if (gameTick % MID_FREQ_INTERVAL == 0) {
+            updateMidFrequency(player);
         }
 
-        // 低頻度更新
-        if (mc.level != null && mc.level.getGameTime() % 20 == 0) {
-            manager.update("player.max_health", df.format(player.getMaxHealth()));
-            manager.update("player.xp_level", String.valueOf(player.experienceLevel));
-            manager.update("player.is_flying", String.valueOf(player.getAbilities().flying));
-            manager.update("player.is_swimming", String.valueOf(player.isSwimming()));
-            manager.update("player.item.mainhand", getItemName(player.getMainHandItem()));
-            manager.update("player.item.offhand", getItemName(player.getOffhandItem()));
-            manager.update("player.item.helmet", getItemName(player.getInventory().armor.get(3)));
-            manager.update("player.item.chestplate", getItemName(player.getInventory().armor.get(2)));
-            manager.update("player.item.leggings", getItemName(player.getInventory().armor.get(1)));
-            manager.update("player.item.boots", getItemName(player.getInventory().armor.get(0)));
+        // 低頻度更新（20tick毎）
+        if (gameTick % LOW_FREQ_INTERVAL == 0) {
+            updateLowFrequency(player);
         }
     }
 
-    @SubscribeEvent
-    public void onLivingHurt(LivingHurtEvent event) {
-        if (event.getEntity() instanceof LocalPlayer player) {
-            // ダメージイベント発生時に体力を即時更新
-            manager.update("player.health", df.format(player.getHealth()));
-        }
+    /**
+     * 高頻度更新（位置・体力など）
+     */
+    private void updateHighFrequency(LocalPlayer player) {
+        safeUpdate("player.posX", formatNumber(player.getX()));
+        safeUpdate("player.posY", formatNumber(player.getY()));
+        safeUpdate("player.posZ", formatNumber(player.getZ()));
+        safeUpdate("player.health", formatNumber(player.getHealth()));
     }
 
+    /**
+     * 中頻度更新（食料・向きなど）
+     */
+    private void updateMidFrequency(LocalPlayer player) {
+        safeUpdate("player.name", player.getName().getString());
+        safeUpdate("player.food", String.valueOf(player.getFoodData().getFoodLevel()));
+        safeUpdate("player.saturation", formatNumber(player.getFoodData().getSaturationLevel()));
+        safeUpdate("player.yaw", formatNumber(player.getYRot()));
+        safeUpdate("player.pitch", formatNumber(player.getXRot()));
+    }
+
+    /**
+     * 低頻度更新（装備・ステータスなど）
+     */
+    private void updateLowFrequency(LocalPlayer player) {
+        safeUpdate("player.max_health", formatNumber(player.getMaxHealth()));
+        safeUpdate("player.xp_level", String.valueOf(player.experienceLevel));
+        safeUpdate("player.is_flying", String.valueOf(player.getAbilities().flying));
+        safeUpdate("player.is_swimming", String.valueOf(player.isSwimming()));
+
+        updateEquipment(player);
+    }
+
+    /**
+     * 装備情報の更新
+     */
+    private void updateEquipment(LocalPlayer player) {
+        safeUpdate("player.item.mainhand", getItemName(player.getMainHandItem()));
+        safeUpdate("player.item.offhand", getItemName(player.getOffhandItem()));
+        safeUpdate("player.item.helmet", getItemName(player.getInventory().armor.get(3)));
+        safeUpdate("player.item.chestplate", getItemName(player.getInventory().armor.get(2)));
+        safeUpdate("player.item.leggings", getItemName(player.getInventory().armor.get(1)));
+        safeUpdate("player.item.boots", getItemName(player.getInventory().armor.get(0)));
+    }
+
+    /**
+     * アイテム名を取得
+     */
     private String getItemName(ItemStack stack) {
         return stack.isEmpty() ? "" : stack.getHoverName().getString();
     }
 
-    private void updateAll() {
-        LocalPlayer player = mc.player;
-        if (player == null) return;
-
-        manager.update("player.posX", df.format(player.getX()));
-        manager.update("player.posY", df.format(player.getY()));
-        manager.update("player.posZ", df.format(player.getZ()));
-        manager.update("player.health", df.format(player.getHealth()));
-        manager.update("player.name", player.getName().getString());
-        manager.update("player.food", String.valueOf(player.getFoodData().getFoodLevel()));
-        manager.update("player.saturation", df.format(player.getFoodData().getSaturationLevel()));
-        manager.update("player.yaw", df.format(player.getYRot()));
-        manager.update("player.pitch", df.format(player.getXRot()));
-        manager.update("player.max_health", df.format(player.getMaxHealth()));
-        manager.update("player.xp_level", String.valueOf(player.experienceLevel));
-        manager.update("player.is_flying", String.valueOf(player.getAbilities().flying));
-        manager.update("player.is_swimming", String.valueOf(player.isSwimming()));
-        manager.update("player.item.mainhand", getItemName(player.getMainHandItem()));
-        manager.update("player.item.offhand", getItemName(player.getOffhandItem()));
-        manager.update("player.item.helmet", getItemName(player.getInventory().armor.get(3)));
-        manager.update("player.item.chestplate", getItemName(player.getInventory().armor.get(2)));
-        manager.update("player.item.leggings", getItemName(player.getInventory().armor.get(1)));
-        manager.update("player.item.boots", getItemName(player.getInventory().armor.get(0)));
-    }
-
+    /**
+     * ダメージイベント発生時に体力を即時更新
+     */
     @SubscribeEvent
-    public void onWorldJoin(EntityJoinLevelEvent event) {
-        if (event.getEntity() instanceof LocalPlayer) {
-            updateAll();
+    public void onLivingHurt(LivingHurtEvent event) {
+        if (event.getEntity() instanceof LocalPlayer player) {
+            safeUpdate("player.health", formatNumber(player.getHealth()));
         }
     }
 }

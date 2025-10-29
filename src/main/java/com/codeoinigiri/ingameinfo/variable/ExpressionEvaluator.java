@@ -8,14 +8,18 @@ import java.util.function.Function;
 
 /**
  * ScriptEngineに依存せず、簡単な数式と条件式を評価する。
- * (旧 ExpressionEvaluator から移動)
+ * Single Responsibility Principle: 式の評価のみに責任を持つ
+ * Open/Closed Principle: 新しい関数の追加が容易
  */
 public class ExpressionEvaluator {
-
+    // 1引数の数学関数
     private static final Map<String, Function<Double, Double>> mathFunctions = new HashMap<>();
+    // 2引数の数学関数
     private static final Map<String, BiFunction<Double, Double, Double>> mathFunctions2 = new HashMap<>();
 
+    // 静的初期化ブロック: 利用可能な数学関数を登録
     static {
+        // 1引数関数
         mathFunctions.put("abs", Math::abs);
         mathFunctions.put("round", d -> (double) Math.round(d));
         mathFunctions.put("floor", Math::floor);
@@ -25,11 +29,23 @@ public class ExpressionEvaluator {
         mathFunctions.put("cos", Math::cos);
         mathFunctions.put("tan", Math::tan);
 
+        // 2引数関数
         mathFunctions2.put("min", Math::min);
         mathFunctions2.put("max", Math::max);
         mathFunctions2.put("pow", Math::pow);
     }
 
+    private ExpressionEvaluator() {
+        // ユーティリティクラスのため、インスタンス化を防止
+    }
+
+    /**
+     * 式を評価して文字列として返す
+     *
+     * @param expr 評価する式
+     * @param vars 変数マップ
+     * @return 評価結果の文字列
+     */
     public static String eval(String expr, Map<String, String> vars) {
         if (expr == null || expr.isEmpty()) return "";
 

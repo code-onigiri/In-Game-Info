@@ -1,0 +1,63 @@
+{
+  "ingameinfo.screen.settings.title": "IngameInfo Settings: %s",
+  "ingameinfo.screen.toggle.on": "ON",
+  "ingameinfo.screen.toggle.off": "OFF",
+
+  "ingameinfo.label.text_color": "Text Color",
+  "ingameinfo.label.scale": "Scale",
+  "ingameinfo.label.background": "Background",
+  "ingameinfo.label.alpha": "Alpha",
+  "ingameinfo.label.padding_t": "Padding T",
+  "ingameinfo.label.padding_l": "Padding L",
+  "ingameinfo.label.line_spacing": "Line Spacing",
+  "ingameinfo.label.pad_bottom": "PadBottom",
+
+  "ingameinfo.label.shadow": "Shadow",
+  "ingameinfo.label.align": "Align",
+  "ingameinfo.label.rgb": "RGB",
+  "ingameinfo.label.per_line": "Per-Line",
+  "ingameinfo.label.padding_b": "Padding B",
+  "ingameinfo.label.padding_r": "Padding R",
+  "ingameinfo.label.pad_top": "PadTop",
+
+  "ingameinfo.button.apply": "Apply",
+  "ingameinfo.button.cancel": "Cancel",
+  "ingameinfo.button.reset": "Reset",
+
+  "ingameinfo.margin.top": "Margin Top",
+  "ingameinfo.margin.bottom": "Margin Bottom",
+  "ingameinfo.margin.left": "Margin Left",
+  "ingameinfo.margin.right": "Margin Right",
+
+  "ingameinfo.edit.hint.position": "HUD Edit: Position (Right-click: cycle anchor, Drag: move, F9: switch, F10: settings, F8: new)",
+  "ingameinfo.edit.hint.text": "HUD Edit: Text (Click: edit line, F6: insert below, Del: delete, F10: settings, F8: new)",
+  "ingameinfo.edit.mode_message": "HUD Edit Mode: %s",
+  "ingameinfo.edit.not_in_mode": "Not in edit mode (F9)",
+  "ingameinfo.edit.select_first": "Select a HUD by clicking it first",
+  "ingameinfo.edit.selection_info": "[%s] %s",
+
+  "ingameinfo.new_context.title": "Create New HUD Context",
+  "ingameinfo.new_context.placeholder": "context name",
+  "ingameinfo.new_context.create_button": "Create",
+  "ingameinfo.new_context.cancel_button": "Cancel",
+  "ingameinfo.new_context.hint_filename": "Enter file/name (will be sanitized)",
+  "ingameinfo.new_context.name_label": "Name",
+
+  "ingameinfo.line_edit.placeholder": "",
+  "ingameinfo.line_edit.save": "Save",
+  "ingameinfo.line_edit.cancel": "Cancel",
+  "ingameinfo.line_edit.delete_line": "Delete Line",
+  "ingameinfo.line_edit.insert_below": "Insert Below",
+  "ingameinfo.line_edit.hint": "Edit raw line / Delete / Insert",
+  "ingameinfo.line_edit.title": "Edit Line: %s",
+
+  "ingameinfo.command.vars.header": "--- Available Variables ---\n%s",
+  "ingameinfo.command.help": "%s",
+
+  "key.ingameinfo.edit_toggle": "key.ingameinfo.edit_toggle",
+  "key.ingameinfo.edit_settings": "key.ingameinfo.edit_settings",
+  "key.ingameinfo.new_context": "key.ingameinfo.new_context",
+  "key.ingameinfo.line_insert_below": "key.ingameinfo.line_insert_below",
+  "key.ingameinfo.line_delete": "key.ingameinfo.line_delete",
+  "key.categories.ingameinfo": "IngameInfo"
+}
