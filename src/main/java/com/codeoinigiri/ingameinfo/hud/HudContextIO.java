@@ -180,15 +180,33 @@ public class HudContextIO {
         ensureDir();
         String safe = desiredName == null || desiredName.isBlank() ? "new_context" : desiredName.trim();
         safe = safe.replaceAll("[^a-zA-Z0-9_-]", "_");
-        // Find unique filename
-        String base = safe;
+
+        // Find unique context name (check both filename and name field in existing contexts)
+        String baseName = safe;
         int counter = 0;
+        String uniqueName;
         File file;
+
         do {
-            String fname = counter == 0 ? base + ".toml" : base + "_" + counter + ".toml";
+            uniqueName = counter == 0 ? baseName : baseName + "_" + counter;
+            String fname = uniqueName + ".toml";
             file = new File(CONTEXT_DIR, fname);
+
+            // Check if a context with this name already exists (in loaded contexts)
+            String finalUniqueName = uniqueName;
+            boolean nameExists = HudContextManager.getContexts().stream()
+                    .anyMatch(ctx -> ctx.name().equals(finalUniqueName));
+
+            if (!file.exists() && !nameExists) {
+                break; // Found unique name and filename
+            }
             counter++;
-        } while (file.exists());
+        } while (counter < 1000); // Safety limit
+
+        if (counter >= 1000) {
+            LOGGER.error("Failed to find unique context name after 1000 attempts");
+            return null;
+        }
 
         try (CommentedFileConfig config = CommentedFileConfig.builder(file)
                 .sync()
@@ -196,7 +214,7 @@ public class HudContextIO {
                 .writingMode(WritingMode.REPLACE)
                 .build()) {
             config.load();
-            config.set("name", safe);
+            config.set("name", uniqueName);
             config.set("position", HudPosition.TOP_RIGHT.name().toLowerCase(Locale.ROOT));
             config.set("color", 0xFFFFFF);
             config.set("align", HudContext.Align.LEFT.name().toLowerCase(Locale.ROOT));
@@ -216,8 +234,8 @@ public class HudContextIO {
             return null;
         }
         HudContextManager.loadContexts();
-        LOGGER.info("Created new HUD context: {}", safe);
-        return safe;
+        LOGGER.info("Created new HUD context: {}", uniqueName);
+        return uniqueName;
     }
 
     public static void saveContextSettings(String contextName, Settings s) {

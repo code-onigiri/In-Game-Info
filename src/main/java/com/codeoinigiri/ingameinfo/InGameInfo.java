@@ -20,7 +20,7 @@ public class InGameInfo {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public InGameInfo(FMLJavaModLoadingContext context) {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus modEventBus = context.getModEventBus();
 
         // Register the setup method for modloading
         modEventBus.addListener(this::commonSetup);
