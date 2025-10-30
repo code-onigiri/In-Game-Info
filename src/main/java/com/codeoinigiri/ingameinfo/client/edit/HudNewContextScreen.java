@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * Simple dialog to create a new HUD context (overlay).
  */
 public class HudNewContextScreen extends Screen {
+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
 
     private final Screen parent;
     private EditBox nameBox;
@@ -45,8 +46,13 @@ public class HudNewContextScreen extends Screen {
     private void onCreate() {
         String name = nameBox.getValue();
         String created = HudContextIO.createNewContext(name);
+        if (created != null && !created.equals(name)) {
+            // Notify user that name was adjusted for uniqueness
+            LOGGER.info("Context name adjusted for uniqueness: '{}' -> '{}'", name, created);
+        }
         onClose();
     }
+
 
     private void onCancel() { onClose(); }
 
