@@ -1,17 +1,43 @@
 package com.codeoinigiri.ingameinfo.hud;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 
+/**
+ * 🔍 Config監視クラス（リファクタリング版）
+ * - config/ingameinfo/context/*.toml のファイル変更を監視
+ * - 変更検出時に HudContextManager.loadContexts() を呼び出し
+ * - スレッドセーフな停止処理
+ */
 public class ConfigWatcher {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final File CONTEXT_DIR = new File("config/ingameinfo/context");
     private static Thread watcherThread;
+    private static volatile boolean running = false;
 
-    public static void startWatching() {
-        File contextDir = new File("config/ingameinfo/context");
-        if (!contextDir.exists()) contextDir.mkdirs();
+    // ===============================
+    // 🚀 監視開始
+    // ===============================
+    public static synchronized void startWatching() {
+        // 既に実行中なら何もしない
+        if (watcherThread != null && watcherThread.isAlive()) {
+            return;
+        }
 
-        Path path = contextDir.toPath();
+        // ディレクトリを作成
+        if (!CONTEXT_DIR.exists()) {
+            boolean ok = CONTEXT_DIR.mkdirs();
+            if (!ok) {
+                LOGGER.warn("Failed to create context directory: {}", CONTEXT_DIR.getAbsolutePath());
+            }
+        }
+
+        running = true;
+        Path path = CONTEXT_DIR.toPath();
 
         watcherThread = new Thread(() -> {
             try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
@@ -22,9 +48,12 @@ public class ConfigWatcher {
                         StandardWatchEventKinds.ENTRY_MODIFY
                 );
 
-                System.out.println("[InGameInfo] ファイル監視を開始しました: " + path);
+                LOGGER.info("Config watcher started: {}", path);
 
-                while (true) {
+                // ===============================
+                // 📡 イベントループ
+                // ===============================
+                while (running) {
                     WatchKey key = watchService.take(); // ブロッキング待機
                     boolean shouldReload = false;
 
@@ -33,34 +62,52 @@ public class ConfigWatcher {
                         Path changed = (Path) event.context();
 
                         // .tomlファイルのみ監視
-                        if (changed.toString().endsWith(".toml")) {
+                        if (changed != null && changed.toString().endsWith(".toml")) {
                             shouldReload = true;
-                            System.out.println("[InGameInfo] 検出: " + kind.name() + " -> " + changed);
+                            LOGGER.info("Detected: {} -> {}", kind.name(), changed);
                         }
                     }
 
                     if (shouldReload) {
-                        HudContextManager.loadContexts();
-                        System.out.println("[InGameInfo] コンテキストを再読み込みしました。");
+                        try {
+                            HudContextManager.loadContexts();
+                            LOGGER.info("HUD contexts reloaded.");
+                        } catch (Exception e) {
+                            LOGGER.error("Error reloading contexts", e);
+                        }
                     }
 
                     key.reset();
                 }
 
             } catch (InterruptedException e) {
-                System.out.println("[InGameInfo] ファイル監視スレッドが終了しました。");
+                LOGGER.warn("Config watcher thread interrupted.");
+            } catch (ClosedWatchServiceException cwse) {
+                LOGGER.info("Config watcher service closed.");
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Config watcher I/O error", e);
+            } finally {
+                running = false;
             }
-        });
+        }, "IngameInfo-ConfigWatcher");
 
         watcherThread.setDaemon(true); // ゲーム終了時に自動停止
         watcherThread.start();
     }
 
-    public static void stopWatching() {
+    // ===============================
+    // ⏹ 監視停止
+    // ===============================
+    public static synchronized void stopWatching() {
+        running = false;
         if (watcherThread != null && watcherThread.isAlive()) {
             watcherThread.interrupt();
+            try {
+                watcherThread.join(2000); // 最大2秒待機
+            } catch (InterruptedException e) {
+                LOGGER.warn("Config watcher stop interrupted.");
+            }
+            watcherThread = null;
         }
     }
 }

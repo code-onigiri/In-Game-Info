@@ -4,36 +4,22 @@ import com.codeoinigiri.ingameinfo.config.HudPosition;
 
 import java.util.List;
 
-public class HudContext {
-    public final String name;
-    public final HudPosition position;
-    public final int color;
-    public final List<String> lines;
-
-    public final Align align;
-    public final float scale;
-    public final boolean shadow;
-
-    public final boolean background;
-    public final int backgroundColor;
-    public final int backgroundPadding;
-
-    public HudContext(String name, HudPosition position, int color, List<String> lines,
-                      Align align, float scale, boolean shadow,
-                      boolean background, int backgroundColor, int backgroundPadding) {
-        this.name = name;
-        this.position = position;
-        this.color = color;
-        this.lines = lines;
-        this.align = align;
-        this.scale = scale;
-        this.shadow = shadow;
-        this.background = background;
-        this.backgroundColor = backgroundColor;
-        this.backgroundPadding = backgroundPadding;
-    }
+public record HudContext(String name, HudPosition position, int color, List<String> lines, Align align, float scale,
+                         boolean shadow, boolean background, int backgroundRgb, double backgroundAlpha,
+                         boolean backgroundPerLine,
+                         int paddingTop, int paddingBottom, int paddingLeft, int paddingRight,
+                         int lineSpacing, int lineSpacingPaddingTop, int lineSpacingPaddingBottom,
+                         int marginTop, int marginBottom, int marginLeft, int marginRight) {
 
     public enum Align {
         LEFT, CENTER, RIGHT
+    }
+
+    public int getX(int screenWidth, int totalWidth) {
+        return position.getX(screenWidth, totalWidth) + marginLeft - marginRight;
+    }
+
+    public int getY(int screenHeight, int totalHeight) {
+        return position.getY(screenHeight, totalHeight) + marginTop - marginBottom;
     }
 }
