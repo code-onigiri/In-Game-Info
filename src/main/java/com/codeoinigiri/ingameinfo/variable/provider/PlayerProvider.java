@@ -15,9 +15,6 @@ public class PlayerProvider extends AbstractVariableProvider {
     private static final long MID_FREQ_INTERVAL = 5L;     // 5tick毎 (中頻度)
     private static final long LOW_FREQ_INTERVAL = 20L;    // 20tick毎 (低頻度)
 
-    private long midFreqCounter = 0;
-    private long lowFreqCounter = 0;
-
     public PlayerProvider() {
         super(HIGH_FREQ_INTERVAL);
     }

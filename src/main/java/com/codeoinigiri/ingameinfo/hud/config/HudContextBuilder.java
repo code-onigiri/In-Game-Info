@@ -43,7 +43,7 @@ public class HudContextBuilder {
 
             // スタイル設定
             HudContext.Align align = parseAlign(config.getOrElse("align", "left"));
-            float scale = ((Number) config.getOrElse("scale", DEFAULT_SCALE)).floatValue();
+            float scale = config.getOrElse("scale", DEFAULT_SCALE);
             boolean shadow = config.getOrElse("shadow", DEFAULT_SHADOW);
 
             // 背景設定

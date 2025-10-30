@@ -60,14 +60,12 @@ public class ExpressionEvaluator {
     }
 
     public static String getHelp() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("--- InGameInfo Operators & Functions ---\n");
-        sb.append("Operators: +, -, *, /, <, >, <=, >=, ==, !=, ? :\n");
-        sb.append("Ternary: (condition ? value_if_true : value_if_false)\n");
-        sb.append("Functions (1 arg): ").append(String.join(", ", mathFunctions.keySet())).append("\n");
-        sb.append("Functions (2 arg): ").append(String.join(", ", mathFunctions2.keySet())).append("\n");
-        sb.append("Special Functions: format(value, \"pattern\")");
-        return sb.toString();
+        return "--- InGameInfo Operators & Functions ---\n" +
+                "Operators: +, -, *, /, <, >, <=, >=, ==, !=, ? :\n" +
+                "Ternary: (condition ? value_if_true : value_if_false)\n" +
+                "Functions (1 arg): " + String.join(", ", mathFunctions.keySet()) + "\n" +
+                "Functions (2 arg): " + String.join(", ", mathFunctions2.keySet()) + "\n" +
+                "Special Functions: format(value, \"pattern\")";
     }
 
     private static String substituteVariables(String expr, Map<String, String> vars) {

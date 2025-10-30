@@ -9,6 +9,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -39,20 +40,9 @@ public class HudContextSettingsScreen extends Screen {
 
     private EditBox marginTopBox, marginBottomBox, marginLeftBox, marginRightBox;
 
-    private Button applyBtn, cancelBtn, resetBtn;
 
     // Row Y positions cached for label rendering
-    private int[] rowY;
     private int topY;
-
-    // Layout numbers (computed in init)
-    private int labelColRight;
-    private int inputColLeft;
-    private int inputWidth;
-    private int smallColLeft;  // 2nd column left (after its label width)
-    private int smallWidth;
-    private int rightWidth;    // common wide width for some 2nd column fields
-    private int marginColLeft;
 
     public HudContextSettingsScreen(String contextName) { this(contextName, null); }
 
@@ -137,29 +127,28 @@ public class HudContextSettingsScreen extends Screen {
         int maxSecondLabelW = 0;
         for (String s : secondLabels) maxSecondLabelW = Math.max(maxSecondLabelW, this.font.width(Component.translatable(s).getString()));
 
-        inputWidth = 140;            // wide fields width (column 1)
-        smallWidth = 72;             // toggle/small fields width (column 2 small)
-        rightWidth = 140;            // some 2nd column fields use this wider width
+        int inputWidth = 140;            // wide fields width (column 1)
+        int smallWidth = 72;             // toggle/small fields width (column 2 small)
+        int rightWidth = 140;            // some 2nd column fields use this wider width
 
         // Compute column lefts
         int firstBlockWidth = maxLabelW + gapLabel + inputWidth; // label + gap + field
-        int secondBlockWidth = (maxSecondLabelW + gapLabel) + Math.max(smallWidth, rightWidth);
+        int secondBlockWidth = (maxSecondLabelW + gapLabel) + rightWidth;
         int totalMainWidth = firstBlockWidth + gap + secondBlockWidth;
 
         int betweenBlocks = 36; // space between main area and margin pane
-        int marginBlockWidth = rightWidth;
-        int totalWidth = totalMainWidth + betweenBlocks + marginBlockWidth;
+        int totalWidth = totalMainWidth + betweenBlocks + rightWidth;
 
         int startX = Math.max(8, this.width / 2 - totalWidth / 2);
-        labelColRight = startX + maxLabelW;
-        inputColLeft = labelColRight + gapLabel; // column1 input left
-        smallColLeft = inputColLeft + inputWidth + gap + maxSecondLabelW + gapLabel; // column2 input left (after its label)
-        marginColLeft = startX + totalMainWidth + betweenBlocks;
+        int labelColRight = startX + maxLabelW;
+        int inputColLeft = labelColRight + gapLabel; // column1 input left
+        int smallColLeft = inputColLeft + inputWidth + gap + maxSecondLabelW + gapLabel; // column2 input left (after its label)
+        int marginColLeft = startX + totalMainWidth + betweenBlocks;
 
         topY = Math.max(32, this.height / 2 - 110);
 
         int[] heights = new int[]{rowSmall, rowLarge, rowSmall, rowLarge, rowSmall, rowLarge, rowSmall, rowLarge};
-        rowY = new int[heights.length];
+        int[] rowY = new int[heights.length];
         rowY[0] = topY;
         for (int i = 1; i < heights.length; i++) rowY[i] = rowY[i-1] + heights[i-1];
 
@@ -211,9 +200,9 @@ public class HudContextSettingsScreen extends Screen {
         // Buttons
         int btnY = Math.min(this.height - 24, (rowY[rowY.length-1] + (heights[heights.length-1])) + 12);
         int centerX = this.width / 2;
-        applyBtn = Button.builder(Component.translatable("ingameinfo.button.apply"), b -> onApply()).bounds(centerX - 160, btnY, 90, 20).build();
-        cancelBtn = Button.builder(Component.translatable("ingameinfo.button.cancel"), b -> onCancel()).bounds(centerX - 60, btnY, 90, 20).build();
-        resetBtn = Button.builder(Component.translatable("ingameinfo.button.reset"), b -> onReset()).bounds(centerX + 40, btnY, 90, 20).build();
+        Button applyBtn = Button.builder(Component.translatable("ingameinfo.button.apply"), b -> onApply()).bounds(centerX - 160, btnY, 90, 20).build();
+        Button cancelBtn = Button.builder(Component.translatable("ingameinfo.button.cancel"), b -> onCancel()).bounds(centerX - 60, btnY, 90, 20).build();
+        Button resetBtn = Button.builder(Component.translatable("ingameinfo.button.reset"), b -> onReset()).bounds(centerX + 40, btnY, 90, 20).build();
         this.addRenderableWidget(applyBtn);
         this.addRenderableWidget(cancelBtn);
         this.addRenderableWidget(resetBtn);
@@ -263,7 +252,7 @@ public class HudContextSettingsScreen extends Screen {
     @Override public boolean isPauseScreen() { return false; }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g);
         super.render(g, mouseX, mouseY, partialTick);
         g.drawCenteredString(this.font, this.getTitle(), this.width / 2, topY - 18, 0xFFFFFF);
@@ -355,17 +344,18 @@ public class HudContextSettingsScreen extends Screen {
         // Right pane: margin labels to the right of margin boxes
         String[] marginLabels = new String[]{"ingameinfo.margin.top", "ingameinfo.margin.bottom", "ingameinfo.margin.left", "ingameinfo.margin.right"};
         EditBox[] marginBoxes = new EditBox[]{marginTopBox, marginBottomBox, marginLeftBox, marginRightBox};
-        int labelXRightOfBox = marginColLeft + rightWidth + 8;
         for (int i = 0; i < marginLabels.length; i++) {
-            int boxY = (marginBoxes[i] != null ? marginBoxes[i].getY() : (rowY[i]));
+            if (marginBoxes[i] == null) continue;
+            int boxY = marginBoxes[i].getY();
             int y = boxY + labelOffsetY;
-            g.drawString(this.font, Component.translatable(marginLabels[i]).getString(), labelXRightOfBox, y, labelColor, false);
+            int x = marginBoxes[i].getX() + marginBoxes[i].getWidth() + 8;
+            g.drawString(this.font, Component.translatable(marginLabels[i]).getString(), x, y, labelColor, false);
         }
     }
 
     @Override
     public void onClose() {
         var mc = Minecraft.getInstance();
-        if (this.parent != null) mc.setScreen(parent); else mc.setScreen(null);
+        mc.setScreen(parent);
     }
 }

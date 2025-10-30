@@ -123,10 +123,11 @@ public class HudOverlay {
                     case TOP_RIGHT -> { x = screenWidth - totalWidth - marginRightPx; y = marginTopPx; }
                     case BOTTOM_LEFT -> { x = marginLeftPx; y = screenHeight - totalHeight - marginBottomPx; }
                     case BOTTOM_RIGHT -> { x = screenWidth - totalWidth - marginRightPx; y = screenHeight - totalHeight - marginBottomPx; }
+                    case CENTER -> { x = (int) ((screenWidth / 2f) - (totalWidth / 2f)); y = (int) ((screenHeight / 2f) - (totalHeight / 2f)); }
                     case CENTER_LEFT -> { x = marginLeftPx; y = (int) ((screenHeight / 2f) - (totalHeight / 2f)); }
                     case CENTER_RIGHT -> { x = screenWidth - totalWidth - marginRightPx; y = (int) ((screenHeight / 2f) - (totalHeight / 2f)); }
-                    case CENTER_TOP -> { x = (int) ((screenWidth / 2f) - (totalWidth / 2f)); y = marginTopPx; }
-                    case CENTER_BOTTOM -> { x = (int) ((screenWidth / 2f) - (totalWidth / 2f)); y = screenHeight - totalHeight - marginBottomPx; }
+                    case TOP_CENTER -> { x = (int) ((screenWidth / 2f) - (totalWidth / 2f)); y = marginTopPx; }
+                    case BOTTOM_CENTER -> { x = (int) ((screenWidth / 2f) - (totalWidth / 2f)); y = screenHeight - totalHeight - marginBottomPx; }
                 }
 
                 // Apply live drag preview translation in position mode for selected context
@@ -174,12 +175,10 @@ public class HudOverlay {
 
                             // 次の行に移動する前に行間パディングを描画
                             if (i < componentLines.size() - 1) {
-                                // 下行間パディング
-                                if (lineSpacingPaddingBottomPx > 0) {
-                                    int gapBottomY1 = bgY2;
-                                    int gapBottomY2 = bgY2 + lineSpacingPaddingBottomPx;
-                                    guiGraphics.fill(bgX1, gapBottomY1, bgX2, gapBottomY2, finalColor);
-                                }
+                            // 下行間パディング
+                            if (lineSpacingPaddingBottomPx > 0) {
+                                guiGraphics.fill(bgX1, bgY2, bgX2, bgY2 + lineSpacingPaddingBottomPx, finalColor);
+                            }
 
                                 // 上行間パディング（次の行の上）
                                 if (lineSpacingPaddingTopPx > 0) {
@@ -195,11 +194,9 @@ public class HudOverlay {
                                         default -> {}
                                     }
 
-                                    int gapTopY1 = nextLineY;
-                                    int gapTopY2 = nextLineY + lineSpacingPaddingTopPx;
-                                    int gapTopX1 = nextLineX;
-                                    int gapTopX2 = nextLineX + paddingLeftPx + nextLineWidth + paddingRightPx;
-                                    guiGraphics.fill(gapTopX1, gapTopY1, gapTopX2, gapTopY2, finalColor);
+                                int gapTopX1 = nextLineX;
+                                int gapTopX2 = nextLineX + paddingLeftPx + nextLineWidth + paddingRightPx;
+                                guiGraphics.fill(gapTopX1, nextLineY, gapTopX2, nextLineY + lineSpacingPaddingTopPx, finalColor);
                                 }
                             }
 

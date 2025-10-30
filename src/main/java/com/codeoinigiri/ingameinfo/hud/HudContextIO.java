@@ -75,7 +75,7 @@ public class HudContextIO {
             LOGGER.info("Saved position for '{}': {} (margins T:{} B:{} L:{} R:{})",
                     contextName, position, marginTop, marginBottom, marginLeft, marginRight);
         } catch (Exception e) {
-            LOGGER.error("Failed saving HUD position for " + contextName, e);
+            LOGGER.error("Failed saving HUD position for {}", contextName, e);
         }
     }
 
@@ -108,7 +108,7 @@ public class HudContextIO {
             HudContextManager.loadContexts();
             LOGGER.info("Saved text line {} for '{}'", lineIndex, contextName);
         } catch (Exception e) {
-            LOGGER.error("Failed saving HUD text for " + contextName, e);
+            LOGGER.error("Failed saving HUD text for {}", contextName, e);
         }
     }
 
@@ -139,7 +139,7 @@ public class HudContextIO {
             HudContextManager.loadContexts();
             LOGGER.info("Inserted line at {} for '{}'", pos, contextName);
         } catch (Exception e) {
-            LOGGER.error("Failed inserting HUD text for " + contextName, e);
+            LOGGER.error("Failed inserting HUD text for {}", contextName, e);
         }
     }
 
@@ -164,7 +164,7 @@ public class HudContextIO {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < lines.size(); i++) {
                 if (i == lineIndex) continue;
-                if (sb.length() > 0) sb.append('\n');
+                if (!sb.isEmpty()) sb.append('\n');
                 sb.append(lines.get(i));
             }
             config.set("text", sb.toString());
@@ -172,7 +172,7 @@ public class HudContextIO {
             HudContextManager.loadContexts();
             LOGGER.info("Deleted text line {} for '{}'", lineIndex, contextName);
         } catch (Exception e) {
-            LOGGER.error("Failed deleting HUD text for " + contextName, e);
+            LOGGER.error("Failed deleting HUD text for {}", contextName, e);
         }
     }
 
@@ -261,7 +261,7 @@ public class HudContextIO {
             HudContextManager.loadContexts();
             LOGGER.info("Saved context settings for '{}'.", contextName);
         } catch (Exception e) {
-            LOGGER.error("Failed saving HUD settings for " + contextName, e);
+            LOGGER.error("Failed saving HUD settings for {}", contextName, e);
         }
     }
 
@@ -293,7 +293,7 @@ public class HudContextIO {
                 return match.orElse(null);
             }
         } catch (Exception e) {
-            LOGGER.error("findFileByContextName failed for '" + name + "'", e);
+            LOGGER.error("findFileByContextName failed for '{}'", name, e);
             return null;
         }
     }

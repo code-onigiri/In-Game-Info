@@ -1,6 +1,7 @@
 package com.codeoinigiri.ingameinfo.variable;
 
 import com.mojang.logging.LogUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.util.function.Supplier;
@@ -9,18 +10,8 @@ import java.util.function.Supplier;
  * A container for custom variables provided through the API.
  * It can hold either a static string value or a dynamic supplier.
  */
-public class CustomVariable {
+public record CustomVariable(String key, String staticValue, Supplier<String> supplier) {
     private static final Logger LOGGER = LogUtils.getLogger();
-
-    private final String key;
-    private final String staticValue;
-    private final Supplier<String> supplier;
-
-    public CustomVariable(String key, String staticValue, Supplier<String> supplier) {
-        this.key = key;
-        this.staticValue = staticValue;
-        this.supplier = supplier;
-    }
 
     public String getValue() {
         if (supplier != null) {
@@ -35,16 +26,12 @@ public class CustomVariable {
         return staticValue != null ? staticValue : "";
     }
 
-    public String getKey() {
-        return key;
-    }
-
     public boolean isDynamic() {
         return supplier != null;
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return "CustomVariable{"
                 + "key='" + key + "'" +
                 ", dynamic=" + isDynamic() +
