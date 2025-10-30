@@ -140,7 +140,6 @@ public class HudEditManager {
                                 String raw = ctx.lines().get(selectedLineIndex);
                                 mc.setScreen(new HudLineEditScreen(Component.translatable("ingameinfo.line_edit.title", ctxName, selectedLineIndex + 1), ctxName, selectedLineIndex, raw));
                                 e.setCanceled(true);
-                                return;
                             }
                         }
                     } else if (mode == Mode.POSITION) {
@@ -155,7 +154,6 @@ public class HudEditManager {
                             previewDx = 0;
                             previewDy = 0;
                             e.setCanceled(true);
-                            return;
                         }
                     }
                 }
@@ -173,7 +171,6 @@ public class HudEditManager {
                                 ctx.marginTop(), ctx.marginBottom(), ctx.marginLeft(), ctx.marginRight());
                         // Reload handled by IO, update selection rects later
                         e.setCanceled(true);
-                        return;
                     }
                 }
             }
@@ -186,7 +183,6 @@ public class HudEditManager {
                 dragging = false;
                 previewDx = previewDy = 0;
                 e.setCanceled(true);
-                return;
             }
         }
     }
@@ -202,7 +198,7 @@ public class HudEditManager {
                 return;
             }
         } catch (Throwable ignore) {
-            if (e.getKey() == GLFW.GLFW_KEY_F9) { cycleMode(); return; }
+            if (e.getKey() == GLFW.GLFW_KEY_F9) { cycleMode(); }
         }
         // Settings key
         try {
@@ -211,7 +207,7 @@ public class HudEditManager {
                 return;
             }
         } catch (Throwable ignore) {
-            if (e.getKey() == GLFW.GLFW_KEY_F10) { openSettingsIfAvailable(); return; }
+            if (e.getKey() == GLFW.GLFW_KEY_F10) { openSettingsIfAvailable(); }
         }
 
         // New: quick actions for line insert/delete and new context
@@ -223,7 +219,6 @@ public class HudEditManager {
                         int idx = getSelectedLineIndex();
                         if (idx >= 0) HudContextIO.insertLine(name, idx + 1, ""); else HudContextIO.addLine(name, "");
                     });
-                    return;
                 }
             } catch (Throwable ignore) {
                 if (e.getKey() == GLFW.GLFW_KEY_F6) {
@@ -231,7 +226,6 @@ public class HudEditManager {
                         int idx = getSelectedLineIndex();
                         if (idx >= 0) HudContextIO.insertLine(name, idx + 1, ""); else HudContextIO.addLine(name, "");
                     });
-                    return;
                 }
             }
             // Delete selected line (Delete by default)
@@ -243,7 +237,6 @@ public class HudEditManager {
             } catch (Throwable ignore) {
                 if (e.getKey() == GLFW.GLFW_KEY_DELETE) {
                     getSelectedContextName().ifPresent(name -> { int idx = getSelectedLineIndex(); if (idx >= 0) HudContextIO.deleteLine(name, idx); });
-                    return;
                 }
             }
             // Create new context (F8 by default)
@@ -251,13 +244,11 @@ public class HudEditManager {
                 if (NEW_CONTEXT != null && NEW_CONTEXT.matches(e.getKey(), e.getScanCode())) {
                     var mc = net.minecraft.client.Minecraft.getInstance();
                     mc.setScreen(new HudNewContextScreen(mc.screen));
-                    return;
                 }
             } catch (Throwable ignore) {
                 if (e.getKey() == GLFW.GLFW_KEY_F8) {
                     var mc = net.minecraft.client.Minecraft.getInstance();
                     mc.setScreen(new HudNewContextScreen(mc.screen));
-                    return;
                 }
             }
         }
@@ -435,58 +426,74 @@ public class HudEditManager {
         if (selectedContextName == null) return;
         HudContext ctx = getContextByName(selectedContextName);
         if (ctx == null) return;
-        // We need width/height to compute margins
-        Rect r = contextRects.get(selectedContextName);
-        if (r == null) return;
-        int totalWidth = r.width();
-        int totalHeight = r.height();
 
-        // Preserve current anchor; update corresponding margins only
-        HudPosition pos = ctx.position();
-        int marginTop = ctx.marginTop();
-        int marginBottom = ctx.marginBottom();
-        int marginLeft = ctx.marginLeft();
-        int marginRight = ctx.marginRight();
-        switch (pos) {
+        // Calculate new margins based on the closest anchor
+        HudPosition anchor = ctx.position();
+        Rect totalRect = contextRects.get(selectedContextName);
+        if (totalRect == null) return; // Should not happen
+        int totalWidth = totalRect.width();
+        int totalHeight = totalRect.height();
+
+        // Find closest corner/edge to snap to
+        float closestDistSq = Float.MAX_VALUE;
+        HudPosition bestAnchor = anchor;
+
+        for (HudPosition pos : HudPosition.values()) {
+            int anchorX = pos.getX(screenWidth, totalWidth);
+            int anchorY = pos.getY(screenHeight, totalHeight);
+            float distSq = (finalX - anchorX) * (finalX - anchorX) + (finalY - anchorY) * (finalY - anchorY);
+            if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                bestAnchor = pos;
+            }
+        }
+        anchor = bestAnchor;
+
+        int marginTop = 0, marginBottom = 0, marginLeft = 0, marginRight = 0;
+        int anchorX = anchor.getX(screenWidth, totalWidth);
+        int anchorY = anchor.getY(screenHeight, totalHeight);
+
+        switch (anchor) {
             case TOP_LEFT -> {
-                marginLeft = Math.max(0, finalX);
                 marginTop = Math.max(0, finalY);
+                marginLeft = Math.max(0, finalX);
+            }
+            case TOP_CENTER -> {
+                marginTop = Math.max(0, finalY);
+                marginLeft = finalX - anchorX; // can be negative
             }
             case TOP_RIGHT -> {
-                marginRight = Math.max(0, screenWidth - (finalX + totalWidth));
                 marginTop = Math.max(0, finalY);
+                marginRight = Math.max(0, screenWidth - (finalX + totalWidth));
             }
+            case CENTER_LEFT -> marginLeft = Math.max(0, finalX);
+            case CENTER -> {
+                marginLeft = finalX - anchorX;
+                marginTop = finalY - anchorY;
+            }
+            case CENTER_RIGHT -> marginRight = Math.max(0, screenWidth - (finalX + totalWidth));
             case BOTTOM_LEFT -> {
-                marginLeft = Math.max(0, finalX);
                 marginBottom = Math.max(0, screenHeight - (finalY + totalHeight));
+                marginLeft = Math.max(0, finalX);
+            }
+            case BOTTOM_CENTER -> {
+                marginBottom = Math.max(0, screenHeight - (finalY + totalHeight));
+                marginLeft = finalX - anchorX;
             }
             case BOTTOM_RIGHT -> {
-                marginRight = Math.max(0, screenWidth - (finalX + totalWidth));
                 marginBottom = Math.max(0, screenHeight - (finalY + totalHeight));
-            }
-            case CENTER_LEFT -> {
-                marginLeft = Math.max(0, finalX);
-            }
-            case CENTER_RIGHT -> {
                 marginRight = Math.max(0, screenWidth - (finalX + totalWidth));
-            }
-            case CENTER_TOP -> {
-                marginTop = Math.max(0, finalY);
-            }
-            case CENTER_BOTTOM -> {
-                marginBottom = Math.max(0, screenHeight - (finalY + totalHeight));
             }
         }
 
-        HudContextIO.savePosition(selectedContextName, pos, marginTop, marginBottom, marginLeft, marginRight);
-        // On save, contexts reload via IO; selection remains by name
+        HudContextIO.savePosition(selectedContextName, anchor, marginTop, marginBottom, marginLeft, marginRight);
     }
 
-    private static HudPosition cyclePosition(HudPosition p) {
-        HudPosition[] vals = HudPosition.values();
-        int idx = p.ordinal();
-        idx = (idx + 1) % vals.length;
-        return vals[idx];
+    private static HudPosition cyclePosition(HudPosition current) {
+        HudPosition[] values = HudPosition.values();
+        int idx = current.ordinal();
+        idx = (idx + 1) % values.length;
+        return values[idx];
     }
 
     public record Rect(int x1, int y1, int x2, int y2) {

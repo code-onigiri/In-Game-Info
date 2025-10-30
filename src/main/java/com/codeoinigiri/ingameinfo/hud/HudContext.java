@@ -14,4 +14,12 @@ public record HudContext(String name, HudPosition position, int color, List<Stri
     public enum Align {
         LEFT, CENTER, RIGHT
     }
+
+    public int getX(int screenWidth, int totalWidth) {
+        return position.getX(screenWidth, totalWidth) + marginLeft - marginRight;
+    }
+
+    public int getY(int screenHeight, int totalHeight) {
+        return position.getY(screenHeight, totalHeight) + marginTop - marginBottom;
+    }
 }

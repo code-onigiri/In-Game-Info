@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Simple dialog to create a new HUD context (overlay).
@@ -16,8 +17,6 @@ public class HudNewContextScreen extends Screen {
 
     private final Screen parent;
     private EditBox nameBox;
-    private Button createBtn;
-    private Button cancelBtn;
 
     public HudNewContextScreen(Screen parent) {
         super(Component.translatable("ingameinfo.new_context.title"));
@@ -38,8 +37,8 @@ public class HudNewContextScreen extends Screen {
         nameBox.setFocused(true);
         this.addRenderableWidget(nameBox);
 
-        createBtn = Button.builder(Component.translatable("ingameinfo.new_context.create_button"), b -> onCreate()).bounds(centerX - 100, y + 30, 90, 20).build();
-        cancelBtn = Button.builder(Component.translatable("ingameinfo.new_context.cancel_button"), b -> onCancel()).bounds(centerX + 10, y + 30, 90, 20).build();
+        Button createBtn = Button.builder(Component.translatable("ingameinfo.new_context.create_button"), b -> onCreate()).bounds(centerX - 100, y + 30, 90, 20).build();
+        Button cancelBtn = Button.builder(Component.translatable("ingameinfo.new_context.cancel_button"), b -> onCancel()).bounds(centerX + 10, y + 30, 90, 20).build();
         this.addRenderableWidget(createBtn);
         this.addRenderableWidget(cancelBtn);
     }
@@ -61,7 +60,7 @@ public class HudNewContextScreen extends Screen {
     public boolean isPauseScreen() { return false; }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g);
         super.render(g, mouseX, mouseY, partialTick);
         int titleY = this.height / 2 - 60;
@@ -85,6 +84,6 @@ public class HudNewContextScreen extends Screen {
     @Override
     public void onClose() {
         var mc = Minecraft.getInstance();
-        if (parent != null) mc.setScreen(parent); else mc.setScreen(null);
+        mc.setScreen(parent);
     }
 }

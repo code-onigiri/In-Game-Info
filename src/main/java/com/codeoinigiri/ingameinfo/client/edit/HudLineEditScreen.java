@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 public class HudLineEditScreen extends Screen {
 
@@ -15,10 +16,6 @@ public class HudLineEditScreen extends Screen {
     private final String initialText;
 
     private EditBox input;
-    private Button saveButton;
-    private Button cancelButton;
-    private Button deleteButton;
-    private Button insertBelowButton;
 
     public HudLineEditScreen(Component title, String contextName, int lineIndex, String initialText) {
         super(title);
@@ -42,16 +39,16 @@ public class HudLineEditScreen extends Screen {
         this.addRenderableWidget(input);
 
         int btnY = boxY + 30;
-        saveButton = Button.builder(Component.translatable("ingameinfo.line_edit.save"), b -> onSave())
+        Button saveButton = Button.builder(Component.translatable("ingameinfo.line_edit.save"), b -> onSave())
                 .bounds(centerX - 190, btnY, 80, 20)
                 .build();
-        cancelButton = Button.builder(Component.translatable("ingameinfo.line_edit.cancel"), b -> onCancel())
+        Button cancelButton = Button.builder(Component.translatable("ingameinfo.line_edit.cancel"), b -> onCancel())
                 .bounds(centerX - 100, btnY, 80, 20)
                 .build();
-        deleteButton = Button.builder(Component.translatable("ingameinfo.line_edit.delete_line"), b -> onDelete())
+        Button deleteButton = Button.builder(Component.translatable("ingameinfo.line_edit.delete_line"), b -> onDelete())
                 .bounds(centerX - 10, btnY, 100, 20)
                 .build();
-        insertBelowButton = Button.builder(Component.translatable("ingameinfo.line_edit.insert_below"), b -> onInsertBelow())
+        Button insertBelowButton = Button.builder(Component.translatable("ingameinfo.line_edit.insert_below"), b -> onInsertBelow())
                 .bounds(centerX + 100, btnY, 110, 20)
                 .build();
         this.addRenderableWidget(saveButton);
@@ -79,7 +76,7 @@ public class HudLineEditScreen extends Screen {
     private void onCancel() { onClose(); }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         int y = this.height / 2 - 70;
@@ -93,9 +90,12 @@ public class HudLineEditScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (super.keyPressed(keyCode, scanCode, modifiers)) return true;
-        if (keyCode == 257 || keyCode == 335) { onSave(); return true; }
-        if (keyCode == 261 /*GLFW_KEY_DELETE*/) { onDelete(); return true; }
-        if (keyCode == 341 /*GLFW_KEY_LEFT_CONTROL*/ || keyCode == 345 /*GLFW_KEY_RIGHT_CONTROL*/) return false;
+        if (keyCode == 257 || keyCode == 335) { // Enter or KP_Enter
+            onSave();
+            return true;
+        }
+        // The delete key check was redundant with the button and could cause accidental deletes.
+        // Users can use the dedicated button.
         return false;
     }
 

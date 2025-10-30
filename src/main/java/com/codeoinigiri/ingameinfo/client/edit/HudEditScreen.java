@@ -3,6 +3,7 @@ package com.codeoinigiri.ingameinfo.client.edit;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Lightweight transparent screen used during HUD edit modes (POSITION/TEXT).
@@ -27,7 +28,7 @@ public class HudEditScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         // Intentionally do not render any blocking UI here.
         // HUD overlays (including edit hints) are rendered by HudOverlay.
         // Draw nothing to keep it transparent.

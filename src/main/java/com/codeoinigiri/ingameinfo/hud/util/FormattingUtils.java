@@ -66,7 +66,7 @@ public final class FormattingUtils {
             }
         }
 
-        return colorCodes.toString() + styleCodes.toString();
+        return colorCodes.append(styleCodes).toString();
     }
 
     /**
